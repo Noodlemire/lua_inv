@@ -1,0 +1,404 @@
+Complete and Total Lua-Only Inventory Rewrite [lua_inv]
+Modding API Reference
+=============================================
+
+
+
+[MetaData]
+
+A table of data attached to various objects, to allow for extra custom data to be added, which can be controlled via its own callbacks.
+
+### Constructors: 
+
+* lua_inv.metadata(parent) - Create a new metadata object. The "parent" should be the object that owns this. See MetaDataParent below.
+
+### Fields [Read-Only]:
+
+* data - The table where the metadata's key/value pairs are actually stored.
+* parent - A reference to the owner of the MetaData. If there is none, this will instead contain {orphaned = true}
+
+### Functions:
+
+* :allow_change(key, value)	- Check if setting the key/value pair is allowed. Returns a boolean indicating permission.
+* :on_change(key, value)	- Simulate effects of setting the key/value pair. Returns the final value.
+* :contains(key)			- Returns true if the value that they key contains is anything other than nil.
+* :get(key)					- Returns the exact value that this key contains, or nil if it doesn't exist.
+* :remove(key)				- Sets the value at the given key to nil.
+* :set_string(key, value)	- Sets the given value, converting to a string if necessary. Returns the final value or false if it failed.
+* :get_string(key)			- Gets the value at the given key as a string. If it doesn't exist, "" is returned.
+* :set_int(key, value)		- Sets the given value, converting to a whole number if necessary. Returns the final value or false if it failed.
+* :get_int(key)				- Gets the value at the given key as a whole number. If it doesn't exist or isn't a number, 0 is returned.
+* :set_float(key, value)	- Sets the given value, converting to a number if necessary. Returns the final value or false if it failed.
+* :get_float(key)			- Gets the value at the given key as a number. If it doesn't exist or isn't a number, 0 is returned.
+* :to_table()				- Returns a writable copy of this MetaData's data table.
+* :from_table(table)		- Clears all of the previous data and adds every key/value pair within the provided table. Returns self.
+* :equals(MetaData)			- Returns true if the provided MetaData has all the same key/value pairs as this one. Callbacks aren't considered for this.
+* :serialize()				- Returns a JSON string representing all the key/value pairs in the data table.
+
+### Global Callbacks (Use with caution):
+
+* lua_inv.register_metadata_allow_change(function(MetaData, key value))	- Create a permission function that applies to all MetaData objects.
+* lua_inv.register_metadata_on_change(function(MetaData, key value))	- Create an on-change modifier function for all MetaData objects.
+
+### Operators:
+
+* MetaData == MetaData - An alternate way to check if two MetaData objects have all the same key/value data.
+
+
+
+[MetaDataParent]
+
+Any object can be considered if set as a MetaData's parent. They gain special functionality for possessing the following functions:
+
+* metadata_allow_change(Parent, MetaData, k, v)		- Apply a special permission function to the owned MetaData that it wouldn't normally have.
+* metadata_on_change(Parent, MetaData, k, v)		- Apply a special transformation function to the owned MetaData that it wouldn't normally have.
+
+
+
+[ItemStack]
+
+A reference to a slot that can hold an item. Unlike the normal kind, these are most often accessed directly via reference.
+When you make a change to one, there is usually no need to "commit" the change by using set_stack in the inventory.
+
+### Constructors:
+
+* lua_inv.itemstack(name, count, wear, meta, parent) - The normal way to create a new ItemStack.
+	-- name: The name of the item, usually in the format of modname:itemname. Defaults to ""
+	-- count: How many of this object you wish to create. Defaults to 1.
+	-- wear: Number/100 for how close this item is to breaking. If the count is higher than 1, only the stack's top item will have the wear. Defaults to 0.
+	-- meta: A key/value table that will be supplied to this item's MetaData. Defaults to an empty table. Can't accept an entire MetaData object; use :to_table() instead.
+	-- parent: The object that owns this ItemStack, usually expected to be an inventory. See ItemStackInInventoryParent below.
+
+* lua_inv.itemstack_from_string(String) - Create an ItemStack based on a provided ItemString.
+
+* lua_inv.itemstack_from_userdata(UserData) - Port a UserData-type ItemStack into a lua_inv-type one.
+
+* lua_inv.itemstack_to_userdata(ItemStack) - The opposite of the above. Export an ItemStack back into a regular UserData item.
+
+### Fields [Read-Only]:
+
+* parent - A reference to the owner of the ItemStack. If there is none, this will instead contain {orphaned = true}
+
+### Special MetaData Fields
+
+* description - If present, this will be shown as the description of the item.
+* inventory_image - If present, this filename will be used for the item's sprite.
+* frames - If present, overrides the amount of frames in an item's animation.
+* speed - If present, overrides the animation speed of the item.
+* frame_template - If present, this will be used to grab the next frame's image, by formatting it with the current frame number.
+	-- If both frames and frame_template are in the MetaData, you can animate an itemstack even if its definition lacks the _lua_inv_animation function.
+
+### Functions:
+
+* :allow_change(key, value)			- Check if setting the key/value pair is allowed. Returns a boolean indicating permission.
+* :on_change(key, value)			- Simulate effects of setting the key/value pair. Returns the final value.
+* :after_change(key, init, final)	- Simulate effects after successfully setting the key's value from init to final. Returns nothing.
+* :metadata_allow_change(MetaData, key, value)	- Apply a special permission function to the owned MetaData that it wouldn't normally have.
+* :metadata_on_change(MetaData, key, value)		- Apply a special transformation function to the owned MetaData that it wouldn't normally have.
+* :is_empty()						- Returns true if this doesn't contain anything.
+* :is_full()						- Returns true only if the stack's count is equal to its max count.
+* :get_name()						- Returns the internal name of the item that this contains.
+* :set_name(name)					- Change the name of the contained item. Setting "" will instead erase it. Returns the final name.
+* :get_count()						- Returns the amount of items this stack contains.
+* :set_count(count)					- Set the amount of items that this stack contains. Setting 0 will instead empty it. Returns the final number.
+* :get_wear()						- Returns how worn out the top item is, from 0 to 100.
+* :set_wear(wear)					- Set this object's wear. If it's over 100, the count will be decremented. Returns the final wear.
+* :get_meta()						- Returns the MetaData of this stack.
+* :get_total_size()					- Returns the count, except the last item is counted as a partial item according to how worn the stack is.
+* :get_description()				- Returns the description of this item, or a custom description if the MetaData contains it.
+* :get_inventory_image()			- Attempts to create an inventory image for this item. If it doesn't exist, it attempt to make a cube formspec element.
+* :get_animation(frame)				- Returns ItemStackAnimation if defined in the registration or MetaData. Returns nil otherwise.
+* :get_wear_visual()				- Returns a colored bar for a formspec or HUD, representing how worn the item is.
+* :to_string()						- Returns an itemstring that represents this item.
+* :get_stack_max()					- Returns the maximum count that this item can have. Defaults to 99 for unknown items.
+* :get_free_space()					- Returns the amount of items that this can gain before it reaches the stack_max.
+* :is_known()						- Returns true if this item has an existing definition.
+* :get_definition()					- Returns this item's entry in minetest.registered_items if it exists.
+* :has_custom_tool_capabilities()	- Returns true if tool_capabilities were set for this item.
+* :get_tool_capabilities()			- Returns custom tool capabilities if set, its definition's capabilites if defined, or the hand's capabilities.
+* :set_tool_capabilities(table)		- Set a table of custom tool capabilities to apply to this item. Returns nothing.
+* :add_wear(wear)					- Add an amount of wear to this item. Works the same as set_wear.
+* :is_similar(ItemStack)			- By default, returns true if this item's name and MetaData match the provided ItemStack. Custom conditions may be set.
+* :add_item(ItemStack)				- Attempt to put ItemStack into this stack. ItemStack will contain the leftovers, if any. Returns self.
+* :item_fits(ItemStack)				- Return true if ItemStack is similar to this, and there is enough free space to fit all of ItemStack.
+* :take_item(count)					- Take the desired amount of items from this stack and return it.
+* :peek_item(count)					- Copy the desired amount of items from this stack and return it.
+* :serialize()						- Returns a JSON string representing the contents of this ItemStack.
+
+### Global Callbacks (Use with caution):
+
+* lua_inv.register_itemstack_allow_change(function(ItemStack, key, value))			- Create a permission function to apply to all ItemStacks.
+* lua_inv.register_itemstack_on_change(function(ItemStack, key, value))				- Create an on_change function to apply to all ItemStack.
+* lua_inv.register_itemstack_after_change(function(ItemStack, key, init, final))	- Create a function to apply after all changes to ItemStacks.
+
+### Definition Entries for minetest.register_item:
+
+* _lua_inv_allow_change(self, key, value)					- Set a restriction for how this item can be changed. Return a boolean to indicate permission.
+* _lua_inv_on_change(self, key, value)						- Do something whenever this item is changed. Return a value to change it.
+* _lua_inv_after_change(self, key, init, final)				- Do something after this item is changed.
+* _lua_inv_metadata_allow_change(self, meta, key, value)	- Set a restriction for how this item's MetaData can be changed. Return false to prevent it.
+* _lua_inv_metadata_on_change(self, meta, key, value)		- Do something whenever the MetaData of this item is changed.
+* _lua_inv_is_similar(self, other)							- Set a custom condition when checking if this item should be considered similar to another.
+* _lua_inv_add(self, other)									- Specify custom behavior for adding other into self.
+* _lua_inv_on_use(self, user, pointed_thing)				- Like on_use, but this one supports lua_inv itemstacks and will NOT replace default behavior.
+* _lua_inv_on_place(self, placer, pointed_thing)			- Like on_place, but this provides a lua_inv itemstack instead.
+* _lua_inv_on_secondary_use(self, placer, pointed_thing)	- Like on_secondary_use, but this provides a lua_inv itemstack instead.
+* _lua_inv_animation(self, frame)							- If used, this should return an ItemStackAnimation.
+
+### Operators:
+
+* ItemStack + ItemStack - Attempt to add the second ItemStack into the first, like in the ItemStack:add_item function.
+* ItemStack == ItemStack - Returns true if both ItemStacks have the same name, count, wear, and MetaData contents.
+* ItemStack < ItemStack - Returns true if the total size of the first ItemStack is less than the second.
+* ItemStack <= ItemStack - Returns true if the total size of the first ItemStack is less than or equal to the second.
+
+
+
+[ItemStackInInventoryParent]
+
+When an Inventory is the parent of an ItemStack, it has the following fields:
+
+* inv - The actual Inventory object that the ItemStack belongs to.
+* list - The name of the Inventory list that the ItemStack is in.
+* index - The specific index within the Inventory's list that the ItemStack is in.
+
+
+
+[ItemStackAnimation]
+
+A mini-definition table used to specify how an object should be animated. It uses the fields in the list below.
+
+Note that when used, the item's inventory_image should provide a vertical animation strip so the animation works in formspecs.
+
+* frames - The amount of frames in the animation.
+* speed - The time (in milliseconds) that each frame is shown. Optional; default is (1000 / frames)
+* frame_template - The name of the file of each individual frame. Use %d in place of a specific frame number, so that string.format will work with it.
+
+
+
+[Inventory]
+
+A reference to a table of lists of itemstacks. Once a list is set, it sticks with the same set of ItemStacks for as long as it possibly can.
+Every slot is set via reference, and items are added and removed simply by directly changing the contents of contained ItemStacks.
+
+### Constructors:
+
+* lua_inv.inventory(parent, allow_change, on_change, after_change) - Create a new inventory with many optional values.
+	-- parent: The object that owns this. If there is none, it will instead be {orphaned = true}
+	-- allow_change(self, InventoryChange): A function used to allow or disallow items from being moved or changed. See InventoryChange below.
+	-- on_change(self, InventoryChange): A function called when a change would occur in the Inventory. See InventoryChange below.
+	-- after_change(self, InventoryChange): A function called after a change occurs in the Inventory. See InventoryChange below.
+
+* lua_inv.inventory_from_serialized_string(serial, new_inv) - Load the given inventory with deserialized data.
+	-- serial: Data from a past use of Inventory:serialize(). Must manually prepend it with "return " including the space.
+	-- new_inv: The inventory reference to put the data in. Must already exist, typically from the same lua_inv.inventory call that created the serialzed inventory.
+
+### Fields [Read-Only]:
+
+* data - The table of lists that this inventory contains, indexed by listname.
+* width - The table of widths for each list, indexed by listname.
+* callbacks - A table of the functions that were provided to the constructor, indexed by function names.
+* parent - A reference to the owner of the Inventory. If there is none, this will instead contain {orphaned = true}
+
+### Functions:
+
+* :get_allow_change()			- Return the allow_change function that was passed to the Constructor. Defaults to a function that always returns true.
+* :get_on_change()						- Return the on_change function that was passed to the Constructor. Defaults to an empty function.
+* :get_after_chagne()					- Return the after_change function that was passed to the Constructor. Defaults to an empty function.
+* :allow_change(self, InventoryChange)	- Returns true or false if a given change is allowed in this inventory.
+* :on_change(self, InventoryChange)		- Applies callbacks when a change would be set in this inventory.
+* :after_change(self, InventoryChange)	- Applies callbacks after a change is set in this inventory.
+* :is_empty(listname)					- Returns true if every ItemStack in every list in this inventory is empty. If listname is provided, only that list is checked for emptiness.
+* :get_size(listname)					- Returns the amount of ItemStacks in a given list.
+* :set_size(listname, size)		- Change the size of a given list. If it's shortened, ItemStacks will be deleted. If size is 0, the whole list is deleted.
+* :get_width(listname)					- Returns the given width of a list, usually only relavent for crafting. Defaults to 1.
+* :set_width(listname, width)			- Sets the Inventory's width. Returns the width if successful, or false otherwise.
+* :get_stack(listname, index)			- Returns the ItemStack from the given list's index.
+* :set_stack(listname, index, ItemStack)- Swap the provided ItemStack into the ItemSlot found in the given listname and index.
+* :get_list(listname)					- Returns a read-only table based on the provided list name.
+* :set_list(listname, list)				- Swap the contents of an entire list with those of the provided list.
+* :get_lists()							- Get the read-only table that this Inventory contains.
+* :set_lists(listname, lists)			- Completely overwrite the contents of an Inventory with the provided lists.
+* :add_item(listname, ItemStack)		- Add the ItemStack into the inventory. It will try to find a similar slot to fill, before trying an empty slot.
+* :room_for_item(listname, ItemStack)	- Return true if there is at least one slot in the list that can fit the provided ItemStack.
+* :contains_item(listname, ItemStack, match_meta)	-Check if the list already contains the provided ItemStack. May optionally check MetaData too.
+* :remove_item(listname, ItemStack, match_meta)		-Remove the requested item from the list and return said item. May optional check MetaData too.
+* :serialize()							- Returns a JSON string representing the contents of this Inventory.
+
+### Global Callbacks (Use with caution):
+
+* lua_inv.register_inventory_allow_change(function(Inventory, InventoryChange))		- Create a permission function to apply to all Inventories.
+* lua_inv.register_inventory_on_change(function(Inventory, InventoryChange))			- Create an on_change function to apply to all Inventories.
+* lua_inv.register_inventory_after_change(function(Inventory, InventoryChange))		- Create a function to apply after all changes to Inventories.
+
+### Definition Entries for minetest.register_node:
+
+* _lua_inv_inventory(pos) - Overrides behavior for creating an inventory at the given position. Usually useful for setting list sizes right away.
+
+
+
+[InventoryChange]
+
+This has a couple variations, depending on the type of change that occurs in an inventory.
+
+* ItemStack :set_name, :set_count, :set_wear
+{
+	type = "set",
+	stack = ItemStack,
+	key = key,
+	val = value, --Only when allow_change and on_change sends the callback
+	init_val = initial_value, --Only when after_change sends the callback
+	final_val = final_value, --Only when after_change sends the callback
+}
+
+* Inventory:set_stack
+{
+	type = "swap",
+	stack1 = ItemStack, --The one that could have been retrieved by ItemStack:get_stack() before the swap
+	stack2 = ItemStack, --The one that was inputted into Inventory:set_stack to trigger the swap.
+}
+
+
+
+[FormspecElement]
+
+A Lua Table representation of a line in a Formspec. As a table, it can easily have dynamic behaviors upon being converted into a Formspec String.
+
+### Constructors:
+
+* lua_inv.formspec_element(name, arguments, to_string) - The usual way to create an element for a Dyanamic Formspec.
+	name: The name of the element. You will usually want this to match one of Minetest's Formspec Element types, unless you set to_string.
+	arguments: A table of arguments. See below for examples.
+	to_string: A function to define custom behavior for turning this into a Formspec string. See below for details.
+
+* lua_inv.default_formspec_element_to_string(FormspecElement) - The default for to_string. Turns a FormspecElement table into a formspec string.
+
+* lua_inv.formspec_element_from_string(String) - This function will interpret a formspec string and create a FormspecElement table based off of it.
+
+### Arguments:
+
+A regular Formspec Element will separate values by either a semi-colon or a comma.
+A semi-colon separates two entire arguments.
+A comma separates sub-arguments, which would then go into their own specific table.
+
+For example: list[current_player;main;0,5;8,4;]
+
+The arguments for the above "list" Formspec Element would be represented as such:
+{
+	[1] = "current_player",
+	[2] = "main",
+	[3] = {[1] = 0, [2] = 5},
+	[4] = {[1] = 8, [2] = 4},
+}
+
+### :to_string(self, player, formname, fields)
+
+* self		- The FormspecElement table that this function belongs to.
+* player	- The Player that this is being shown to.
+* formname	- The name of the form that will be sent to the player when the final formspec is shown.
+* fields	- Optional. Will be present if the player did something that would require feedback and a new formspec to be formed. Works like regular Minetest.
+
+### Subclasses:
+
+* lua_inv.dynamic_list(inv_location, listname, x, y, w, h, start_index)	- Like a list[], except it's a grid of buttons to form a lua_inv-compatible UI.
+* lua_inv.stack_mode_selector(x, y)								- Meant to be paired with dynamic_list to offer more options for moving around ItemStacks.
+* lua_inv.drop_item_button(x, y)								- Provides a way for formspecs with dynamic lists to drop items onto the ground.
+
+
+
+[DynamicFormspec]
+
+This is essentially a formspec that is built to use FormspecElement as defined above.
+
+### Constructors:
+
+lua_inv.dynamic_formspec({FormspecElements}) - The standard method for creating a DynamicFormspec.
+
+lua_inv.dynamic_formspec_from_string(formspec) - This is a way to automatically interpret and convert an existing formspec string into a DynamicFormspec.
+
+### Functions
+
+* :size()							- Returns the number of FormspecElements.
+* :get(index)						- Returns the FormspecElement at the given index.
+* :set(index, FormspecElement)		- Replace the FormspecElement at the given index with a new one, or deletes it if the second argument is nil.
+* :add(FormspecElement)				- Add the given FormspecElement to the end of the list.
+* :del(index)						- Remove the FormspecElement at the given index. Elements after that one have their index reduced by 1 to close the gap.
+* :form(Player, formname, fields)	- Build a presentable formspec string out of all existing FormspecElements according to their to_string method.
+
+
+
+[Manager]
+
+An internal manager is used to keep track of DynamicFormspec states. Also comes with helpful functions.
+
+* lua_inv.get_df_meta(Player) - Returns two MetaData objects tied to the Player's open DynamicFormspec. It's important as it allows FormspecElements to communicate.
+	-- meta: For more persistent variables that are kept even after the DynamicFormspec is closed.
+	-- temp_meta: For less persistent variables that get deleted when the DynamicFormspec is closed or updated. Occasionally needed to fix cases of looping or other oddities in formspecs.
+
+* lua_inv.show_formspec(Player, formname, DynamicFormspec) - The official method to showing a DynamicFormspec in a way that indicates lua_inv compatability.
+
+
+
+[SurvivalInventory]
+
+A subclass of a DynamicFormspec that is given to all players. It's a lua_inv compatible recreation of a basic survival inventory formspec.
+
+### Methods:
+
+* lua_inv.survival_inventory.form()			- Builds the DynamicFormspec to be shown to the player. It has a custom element to show a 2D image or 3D model on the owner based of their properties.
+* lua_inv.survival_inventory.ref(Player)	- Builds the Player's Inventory, with the Player as its parent, with allow_change and after_change callbacks.
+
+
+
+[PlayerInventory]
+
+Although mainly for internal use, it comes with a few tools that may be useful in various cases.
+
+### Fields:
+
+* lua_inv.player_inventory - A table, indexed by player names, which can be used to access a player's inventory or inventory formspec.
+	-- inv: A link to the player's Inventory.
+	-- form: A link to the DynamicFormspec shown to the player to let them interact with their inventory.
+
+### Methods:
+
+* lua_inv.get_player_wielded_item(player)				- Get the ItemStack that the player is wielding.
+* lua_inv.set_player_wielded_item(player, itemstack)	- Set the ItemStack that the playee is wielding. A Userdata item may be sent instead, and will automaticall be converted.
+* lua_inv.update_held_item_data(player)					- Update internal information about the wielded item's tool_capabilities. Automatically called for most use cases.
+
+
+
+[NodeInventory]
+
+A separate table of these is maintained to keep track of node inventories and ensure that they are readily accessible.
+
+### Constructor:
+
+lua_inv.fetch_node_inventory(pos, keep_nil)	- Returns a node inventory for the given position, and creates one if it didn't already exist.
+	-- keep_nil: Optional. If true, this function will return nil instead of creating a new inventory.
+
+
+
+[DetachedInventory]
+
+A table of these is maintained to allow them to appear in formspecs.
+
+Note that unlike other inventory types, these are NOT saved automatically. For these, you should implement persistence yourself, if necessary.
+
+### Constructor:
+
+lua_inv.create_detached_inventory(name, input_parent, allow_change_func, on_change_func, after_change_func) - Returns a new detached inventory.
+	-- name: The name of the detached inventory, used to fetch it later.
+	-- The other arguments work the same as lua_inv.inventory()
+	-- Note that you are not allowed to create a detached inventory using the name of one that already exists. This will cause an error.
+
+### Method:
+
+lua_inv.get_detached_inventory(name) - Returns a detached inventory indexed by the given name, if it exists.
+
+
+
+[Misc. Functions]
+
+* lua_inv.update_hotbar(player)				- Update the player's hotbar visuals in the event of a change. Automatically called for most use cases.
+* lua_inv.tiles_to_cube_textures({tiles})	- Converts a table of tiles from an object's properties into a table of textures for an entity.
