@@ -36,6 +36,7 @@ dofile(mp.."formspec_elements/formspec_element.lua")
 dofile(mp.."formspec_elements/dynamic_list.lua")
 dofile(mp.."formspec_elements/stack_mode_selector.lua")
 dofile(mp.."formspec_elements/drop_item_button.lua")
+dofile(mp.."formspec_elements/active_indicator.lua")
 
 dofile(mp.."dynamic_formspecs/manager.lua")
 dofile(mp.."dynamic_formspecs/dynamic_formspec.lua")

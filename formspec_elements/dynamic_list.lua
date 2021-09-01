@@ -187,13 +187,15 @@ function lua_inv.dynamic_list(in_inv_location, in_listname, in_x, in_y, in_w, in
 
 					str = str.."image_button["..(pos[1] + x - 1)..','..(pos[2] + y - 1)..";1,1;;"..slotname..";]"
 
-					if not stack:is_empty() then
+					if stack and not stack:is_empty() then
 						str = str.."tooltip["..slotname..';'..stack:get_description()..']'
 
 						local anim = stack:get_animation()
 						if anim then
 							str = str.."animated_image["..(pos[1] + x - 1)..','..(pos[2] + y - 1)..";1,1;"..stack:get_name()..";"
 									..stack:get_inventory_image()..";"..anim.frames..";"..anim.speed..";]"
+						elseif not stack:get_inventory_image(true) then
+							str = str.."item_image["..(pos[1] + x - 1)..','..(pos[2] + y - 1)..";1,1;"..stack:get_name().."]"
 						else
 							str = str.."image["..(pos[1] + x - 1)..','..(pos[2] + y - 1)..";1,1;"..stack:get_inventory_image()..']'
 						end

@@ -303,6 +303,7 @@ The arguments for the above "list" Formspec Element would be represented as such
 * lua_inv.dynamic_list(inv_location, listname, x, y, w, h, start_index)	- Like a list[], except it's a grid of buttons to form a lua_inv-compatible UI.
 * lua_inv.stack_mode_selector(x, y)								- Meant to be paired with dynamic_list to offer more options for moving around ItemStacks.
 * lua_inv.drop_item_button(x, y)								- Provides a way for formspecs with dynamic lists to drop items onto the ground.
+* lua_inv.active_indicator(x, y, w, y, base_img, cover_img, var)- Like an image[], except var% of cover_img will be drawn over base_img.
 
 
 
@@ -400,5 +401,8 @@ lua_inv.get_detached_inventory(name) - Returns a detached inventory indexed by t
 
 [Misc. Functions]
 
-* lua_inv.update_hotbar(player)				- Update the player's hotbar visuals in the event of a change. Automatically called for most use cases.
+* lua_inv.change_involves_list(change, listname)	- If the change table has an involved stack in the given listname, return the stack.
+* lua_inv.set_list_take_only(inv, change, listname) - Use in an allow_change callback to prevent players from placing items in the given listname.
 * lua_inv.tiles_to_cube_textures({tiles})	- Converts a table of tiles from an object's properties into a table of textures for an entity.
+* lua_inv.update_hotbar(player)				- Update the player's hotbar visuals in the event of a change. Automatically called for most use cases.
+

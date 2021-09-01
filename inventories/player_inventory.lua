@@ -84,9 +84,23 @@ minetest.register_on_joinplayer(function(player)
 	player_inventory.form = lua_inv.survival_inventory.form(player)
 	lua_inv.player_inventory[player:get_player_name()] = player_inventory
 
-	player:set_inventory_formspec("size[8,8]button_exit[1,1;6,6;continue;Please hit ESC to continue.]")
+	player:set_inventory_formspec("size[8,8]button[1,1;6,6;continue;Please this or hit ESC to continue.]")
 
 	lua_inv.update_held_item_data(player)
+	
+	if minetest.settings:get_bool("lua_inv_mobile_support", true) then
+		player:hud_add({
+			hud_elem_type = "image",
+			text = "lua_inv_crosshair.png",
+
+			scale = {x = 1, y = 1},
+			position = {x = 0.5, y = 0.5},
+			direction = 1,
+			alignment = {x = 0, y = 0},
+			offset = {x = 0, y = 0},
+			z_index = 1
+		})
+	end
 end)
 
 function lua_inv.get_player_wielded_item(player)
@@ -140,7 +154,7 @@ local function get_pointed_thing(player, tool)
 	--Get the tool's definition, to check its digparams and range
 	local def = tool:get_definition()
 	--Create a ray between the player's eyes and where they're looking, limited by their tool's range
-	local ray = Raycast(pos, vector.add(pos, vector.multiply(player:get_look_dir(), def.range or minetest.registered_items[""].range or 4)))
+	local ray = Raycast(pos, vector.add(pos, vector.multiply(player:get_look_dir(), (def and def.range) or minetest.registered_items[""].range or 4)))
 
 	--Return the first pointable thing found that isn't the player calling this
 	for pt in ray do
@@ -182,7 +196,7 @@ controls.register_on_press(function(player, control)
 		lua_inv.set_player_wielded_item(player, itemstack)
 	end
 
-	if control == "place" then
+	if control == "place" or (minetest.settings:get_bool("lua_inv_mobile_support", true) and control == "aux1") then
 		local itemstack = lua_inv.get_player_wielded_item(player)
 		if itemstack:is_empty() then return end
 
@@ -201,7 +215,7 @@ controls.register_on_press(function(player, control)
 
 		if pointed_thing.type == "node" then
 			itemstack = lua_inv.itemstack_to_userdata(itemstack)
-			local output = (def.on_place or minetest.item_place_node)(itemstack, player, pointed_thing)
+			local output = (def.on_place or minetest.item_place)(itemstack, player, pointed_thing)
 
 			if output then
 				itemstack = output
@@ -220,7 +234,7 @@ controls.register_on_press(function(player, control)
 		end
 
 		if itemstack then
-			lua_inv.set_player_wielded_item(player, lua_inv.itemstack_from_userdata(itemstack))
+			lua_inv.set_player_wielded_item(player, itemstack)
 		end
 	end
 end)

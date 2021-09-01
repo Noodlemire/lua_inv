@@ -215,16 +215,19 @@ local static = {
 			minetest.registered_items["unknown"].description
 	end,
 
-	get_inventory_image = function(self)
+	get_inventory_image = function(self, nil_if_tiles)
 		if not self:is_known() then
 			return "unknown_item.png"
 		end
 
-		local image = self:get_meta():get("inventory_image") or self:get_definition().inventory_image
-		local tiles = self:get_definition().tiles
+		local def = self:get_definition()
+		local image = self:get_meta():get("inventory_image") or def.inventory_image
+		local tiles = def.tiles
 
 		if (not image or image == "") then
 			if tiles then
+				if nil_if_tiles then return end
+
 				local t2 = tileToString(tiles[3]) or tileToString(tiles[2]) or tileToString(tiles[1])
 				local t3 = tileToString(tiles[6]) or t2
 				image = minetest.inventorycube(tileToString(tiles[1]), t3, t2)
@@ -431,6 +434,9 @@ local static = {
 }
 
 function lua_inv.itemstack(input_name, input_count, input_wear, input_meta, input_parent)
+	input_name = (not input_count or input_count > 0) and input_name
+	input_count = input_name and input_name ~= "" and input_count
+
 	local itemstack = {
 		name = input_name or "",
 		count = input_count or (input_name and 1) or 0,
@@ -508,6 +514,8 @@ end
 
 function lua_inv.itemstack_from_string(str)
 	local splits = str:split("return", false, 1)
+	if not splits[1] then return lua_inv.itemstack() end
+
 	local stats = splits[1]:split(' ')
 
 	local meta = nil
@@ -520,10 +528,14 @@ function lua_inv.itemstack_from_string(str)
 end
 
 function lua_inv.itemstack_from_userdata(itemstack)
+	if type(itemstack) ~= "userdata" then return itemstack end
+
 	return lua_inv.itemstack(itemstack:get_name(), itemstack:get_count(), itemstack:get_wear() / 655.35, itemstack:get_meta():to_table().fields)
 end
 
 function lua_inv.itemstack_to_userdata(itemstack)
+	if type(itemstack) ~= "table" then return itemstack end
+
 	local stack = ItemStack({
 		name = itemstack:get_name(),
 		count = itemstack:get_count(),

@@ -56,6 +56,8 @@ function lua_inv.dynamic_formspec(input_elems)
 		end,
 
 		form = function(self, player, formname, fields)
+			self.meta:set_string("formname", formname)
+
 			local formspec = ""
 
 			for i = 1, self:size() do
@@ -85,8 +87,9 @@ function lua_inv.dynamic_formspec(input_elems)
 end
 
 function lua_inv.get_df_meta(player)
-	if lua_inv.open_formspecs[player:get_player_name()] then
-		return lua_inv.open_formspecs[player:get_player_name()].meta, lua_inv.open_formspecs[player:get_player_name()].temp_meta
+	local open = lua_inv.open_formspecs[player:get_player_name()]
+	if open then
+		return open.meta, open.temp_meta
 	end
 end
 

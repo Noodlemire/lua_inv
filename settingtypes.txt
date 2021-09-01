@@ -1,0 +1,5 @@
+#Adds an animated torch, a D6 that changes it sprite according to what you roll, and a stackable pickaxe.
+lua_inv_test_items (Register various items to test lua_inv features) bool false
+
+#Adds an extra crosshair that won't be invisible to mobile players, and makes the aux1 (E) key act like a right-click, as the "place" control doesn't work
+lua_inv_mobile_support (Enable features required for Mobile users) bool true

@@ -1,0 +1,15 @@
+1.0.1:
+	-Added the active_indicator[] element, which can draw a percent-based part of an image over another image, using a defined meta field.
+	-Added support for the /give command
+	-Added support for default furnaces
+	-In Dynamic Lists, non-cubic nodes will now display in their proper form using the item_image[] element.
+
+	-Fixed the hotbar's functionality on mobile. Tapping each slot now switches the wield index properly.
+	-Fixed the "Press this or ESC to continue" window on mobile. Pressing the button now properly opens the inventory, rather than closing the form.
+	-Added a workaround for mobile users being unable to place blocks. The Aux button can now place blocks as well.
+	-To help with aiming the Aux button, a crosshair is now shown on mobile, as the regular one is permanently disabled by the Android Client.
+	-Mobile's Aux key and extra crosshair can both be disabled in the settings.
+	-Test items can now be disabled in the settings.
+	-The hotbar HUD should now scale properly across different screen resolutions.
+	-The game will no longer crash when you use an unknown item.
+	-Right-clicking while holding a worn tool will no longer magically repair it.

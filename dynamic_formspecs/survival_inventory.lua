@@ -55,20 +55,7 @@ function lua_inv.survival_inventory.ref(player)
 	return lua_inv.inventory(player:get_player_name(),
 		--Allow Change
 		function(inv, change)
-			if change.type == "swap" and ((change.stack1.parent.list == "craftpreview" and change.stack2:is_empty()) or 
-						(change.stack2.parent.list == "craftpreview" and change.stack1:is_empty())) then
-				return true
-			end
-
-			if change.type == "swap" and (change.stack1.parent.list == "craftpreview" or change.stack2.parent.list == "craftpreview") then
-				return false
-			end
-
-			if change.type == "set" and change.stack.parent.list == "craftpreview" and (change.key ~= "count" or change.val ~= 0) then
-				return false
-			end
-
-			return true
+			return lua_inv.set_list_take_only(inv, change, "craftpreview")
 		end, 
 
 		nil,

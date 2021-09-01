@@ -21,6 +21,11 @@ local hotbar_data = {}
 
 local default_ratio = minetest.settings:get("screen_w") / minetest.settings:get("screen_h")
 
+local function default_pos(i)
+	--0.348 + .0435 * (i - 1), 0.9625
+	return 0.30555 + .05555 * (i - 1), -32
+end
+
 function lua_inv.update_hotbar(player)
 	local pname = player:get_player_name()
 
@@ -68,15 +73,17 @@ function lua_inv.update_hotbar(player)
 		end
 
 		if not hotbar_data[pname]["hotbar_slot_"..i] then
+			local x, y = default_pos(i)
+
 			hotbar_data[pname]["hotbar_slot_"..i] = player:hud_add({
 				hud_elem_type = "image",
 				text = img,
 
 				scale = {x = -4, y = -4 * hotbar_data[pname].aspect_ratio},
-				position = {x = 0.348 + .0435 * (i - 1), y = 0.9625},
+				position = {x = 0.5, y = 1},
 				direction = 1,
 				alignment = {x = 0, y = 0},
-				offset = {x = 0, y = 0},
+				offset = {x = x * 1000 - 500, y = y},
 				z_index = 1
 			})
 
@@ -86,10 +93,10 @@ function lua_inv.update_hotbar(player)
 				number = "0xFFFFFF",
 
 				scale = {x = -4, y = -4 * hotbar_data[pname].aspect_ratio},
-				position = {x = 0.363 + .0435 * (i - 1), y = 0.9825},
+				position = {x = 0.5, y = 1},
 				direction = 1,
 				alignment = {x = 0, y = 0},
-				offset = {x = 0, y = 0},
+				offset = {x = (x + 0.015) * 1000 - 500, y = y + 16},
 				z_index = 1
 			})
 
@@ -98,10 +105,10 @@ function lua_inv.update_hotbar(player)
 				text = wear_img,
 
 				scale = {x = -4, y = -4 * hotbar_data[pname].aspect_ratio},
-				position = {x = 0.348 + .0435 * (i - 1), y = 0.9625},
+				position = {x = 0.5, y = 1},
 				direction = 1,
 				alignment = {x = 0, y = 0},
-				offset = {x = 0, y = 0},
+				offset = {x = x * 1000 - 500, y = y},
 				z_index = 1
 			})
 		else
@@ -114,6 +121,7 @@ end
 
 minetest.register_on_joinplayer(function(player, last_login)
 	local pname = player:get_player_name()
+	local x, y = default_pos(1)
 
 	hotbar_data[pname] = {
 		wield_index = player:get_wield_index(),
@@ -121,17 +129,17 @@ minetest.register_on_joinplayer(function(player, last_login)
 		animation = {}
 	}
 
-	player:hud_set_flags({hotbar = false})
+	minetest.after(0.25, player.hud_set_flags,  player, {hotbar = false})
 
 	player:hud_add({
 		hud_elem_type = "image",
 		text = "lua_inv_hotbar.png",
 
 		scale = {x = 0.75, y = 0.75},
-		position = {x = 0.5, y = 0.9625},
+		position = {x = 0.5, y = 1},
 		direction = 1,
 		alignment = {x = 0, y = 0},
-		offset = {x = 0, y = 0},
+		offset = {x = 0, y = y},
 		z_index = 0
 	})
 
@@ -140,10 +148,10 @@ minetest.register_on_joinplayer(function(player, last_login)
 		text = "lua_inv_selected.png",
 
 		scale = {x = 3.25, y = 3.25},
-		position = {x = 0.348, y = 0.9625},
+		position = {x = 0.5, y = 1},
 		direction = 1,
 		alignment = {x = 0, y = 0},
-		offset = {x = 0, y = 0},
+		offset = {x = x * 1000 - 500, y = y},
 		z_index = 2
 	})
 
@@ -183,11 +191,9 @@ minetest.register_globalstep(function(dtime)
 
 		if hotbar_data[pname].wield_index ~= player:get_wield_index() then
 			hotbar_data[pname].wield_index = player:get_wield_index()
+			local x, y = default_pos(hotbar_data[pname].wield_index)
 
-			player:hud_change(hotbar_data[pname].hotbar_wield_index, "position", {
-				x = 0.348 + .0435 * (player:get_wield_index() - 1),
-				y = 0.9625
-			})
+			player:hud_change(hotbar_data[pname].hotbar_wield_index, "offset", {x = x * 1000 - 500, y = y})
 
 			lua_inv.update_held_item_data(player)
 		end
