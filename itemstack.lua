@@ -434,13 +434,13 @@ local static = {
 }
 
 function lua_inv.itemstack(input_name, input_count, input_wear, input_meta, input_parent)
-	input_name = (not input_count or input_count > 0) and input_name
-	input_count = input_name and input_name ~= "" and input_count
+	input_name = (not input_count or tonumber(input_count) > 0) and input_name
+	input_count = input_name and input_name ~= "" and tonumber(input_count)
 
 	local itemstack = {
 		name = input_name or "",
 		count = input_count or (input_name and 1) or 0,
-		wear = input_wear or 0,
+		wear = tonumber(input_wear or 0),
 		tool_capabilities = nil,
 	}
 	

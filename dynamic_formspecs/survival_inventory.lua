@@ -40,15 +40,17 @@ local function get_player_display(player)
 end
 
 function lua_inv.survival_inventory.form()
-	return lua_inv.dynamic_formspec({
-		lua_inv.formspec_element("size", {{8, 8.5}}),
-		lua_inv.formspec_element("player_view", {}, function(self, player, formname, fields) return get_player_display(player) end),
-		lua_inv.drop_item_button(7, 7.9),
-		lua_inv.dynamic_list("current_player", "main", 0, 3.75, 8, 4),
-		lua_inv.dynamic_list("current_player", "craft", 3, 0, 3, 3),
-		lua_inv.dynamic_list("current_player", "craftpreview", 7, 1, 1, 1),
-		lua_inv.stack_mode_selector(0, 7.9),
-	})
+	local df = lua_inv.dynamic_formspec()
+	df:page_add("Crafting")
+
+	df:add(lua_inv.formspec_element("player_view", {}, function(self, player, formname, fields) return get_player_display(player) end))
+	df:add(lua_inv.drop_item_button(7, 7.4))
+	df:add(lua_inv.dynamic_list("current_player", "main", 0, 3.25, 8, 4))
+	df:add(lua_inv.dynamic_list("current_player", "craft", 3, 0, 3, 3))
+	df:add(lua_inv.dynamic_list("current_player", "craftpreview", 7, 1, 1, 1))
+	df:add(lua_inv.stack_mode_selector(0, 7.4))
+	
+	return df
 end
 
 function lua_inv.survival_inventory.ref(player)

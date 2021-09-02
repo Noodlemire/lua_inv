@@ -25,6 +25,7 @@ minetest.register_entity("lua_inv:wielded_item", {
 		textures = {""},
 		pointable = false,
 		is_visible = false,
+		static_save = false
 	},
 
 	_item = "",
@@ -91,10 +92,12 @@ minetest.register_entity("lua_inv:wielded_item", {
 minetest.register_on_joinplayer(function(player)
 	player:hud_set_flags({wielditem = false})
 
-	local ent = minetest.add_entity(player:get_pos(), "lua_inv:wielded_item"):get_luaentity()
+	minetest.after(0.1, function()
+		local ent = minetest.add_entity(player:get_pos(), "lua_inv:wielded_item"):get_luaentity()
 
-	ent._owner = player
-	wielded_item_entities[player:get_player_name()] = ent
+		ent._owner = player
+		wielded_item_entities[player:get_player_name()] = ent
 
-	ent.object:set_attach(player, "Arm_Right", {x=0, y=4, z=2.5}, {x=-45, y=180, z=0}, true)
+		ent.object:set_attach(player, "Arm_Right", {x=0, y=4, z=2.5}, {x=-45, y=180, z=0}, true)
+	end)
 end)

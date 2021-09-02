@@ -46,8 +46,6 @@ if minetest.get_modpath("default") then
 	dofile(mp.."optional_depends/default.lua")
 end
 
-minetest.register_on_mods_loaded(function()
-	if minetest.get_modpath("sfinv") then
-		sfinv.enabled = false
-	end
-end)
+if minetest.get_modpath("sfinv") then
+	sfinv.enabled = false
+end

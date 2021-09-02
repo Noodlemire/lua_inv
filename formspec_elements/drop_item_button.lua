@@ -59,6 +59,7 @@ function lua_inv.drop_item_button(in_x, in_y)
 			local ent = minetest.add_entity(pos, "__builtin:item")
 
 			if ent then
+				ent:set_velocity(player:get_look_dir())
 				ent:get_luaentity():set_item(dropped:to_string())
 			end
 

@@ -13,3 +13,20 @@
 	-The hotbar HUD should now scale properly across different screen resolutions.
 	-The game will no longer crash when you use an unknown item.
 	-Right-clicking while holding a worn tool will no longer magically repair it.
+
+
+
+1.0.2:
+	-Dropped items now have velocity based on where the player is looking
+	-Added support for default bookshelves and vessels shelves
+	-Function lua_inv.change_involves_list now takes "inv" as its argument; it'll only check that inv to see if the change involves the given listname.
+	-A few functions to override nodes from MTG to give them lua_inv support have become global. They can be reused for any similar nodes in other mods.
+	-Dynamic Lists have a new element, "slot_bg", which will be drawn over any empty slot if its defined.
+	-Added global callbacks for when a Dynamic Formspec is opened or closed.
+	-Added native page support to Dynamic Formspecs.
+	-Added "Fields" descriptions to the Dynamic Formspec API, as they were missing before.
+
+	-Fixed some cases where the player's wielded item would be invisible.
+	-Wielded item entities will no longer be statically saved. This could cause them to secretly accumulate over time.
+	-Fixed various crashes caused by anything that would cause the game to try evaluating an itemstring's count.
+	-Restored various on_step behaviors for item entities that were previously absent from lua_inv.

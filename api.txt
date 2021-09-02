@@ -300,7 +300,7 @@ The arguments for the above "list" Formspec Element would be represented as such
 
 ### Subclasses:
 
-* lua_inv.dynamic_list(inv_location, listname, x, y, w, h, start_index)	- Like a list[], except it's a grid of buttons to form a lua_inv-compatible UI.
+* lua_inv.dynamic_list(inv_location, listname, x, y, w, h, start_index, slot_bg)- Like a list[], except it's a grid of buttons to form a lua_inv-compatible UI.
 * lua_inv.stack_mode_selector(x, y)								- Meant to be paired with dynamic_list to offer more options for moving around ItemStacks.
 * lua_inv.drop_item_button(x, y)								- Provides a way for formspecs with dynamic lists to drop items onto the ground.
 * lua_inv.active_indicator(x, y, w, y, base_img, cover_img, var)- Like an image[], except var% of cover_img will be drawn over base_img.
@@ -310,21 +310,51 @@ The arguments for the above "list" Formspec Element would be represented as such
 [DynamicFormspec]
 
 This is essentially a formspec that is built to use FormspecElement as defined above.
+It can be set up to use a page structure pretty easily, just by using the related page functions.
+Every Dynamic Formspec requires at least one page to do anything. The first added page will have have an index of 1.
 
 ### Constructors:
 
-lua_inv.dynamic_formspec({FormspecElements}) - The standard method for creating a DynamicFormspec.
+lua_inv.dynamic_formspec() - The standard method for creating a DynamicFormspec. Note that at least one page must always be created for it to be usable.
 
 lua_inv.dynamic_formspec_from_string(formspec) - This is a way to automatically interpret and convert an existing formspec string into a DynamicFormspec.
 
+### Fields [Read-Only]:
+
+* elems - A table of all the pages of FormspecElements.
+* pageTitles - A table of each page's title.
+* meta - The primary MetaData object that belongs to the formspec, typically used by each FormspecElement for communication.
+* temp_meta - A secondary MetaData object, which is cleared after each time the formspec is changed or closed.
+* size_w - The width of this formspec, which applies to all pages.
+* size_h - The height of this formspec, which applies to all pages.
+* tabs_hidden - If true, the tabheader[] element will no longer be shown if the formspec has multiple pages.
+
 ### Functions
 
-* :size()							- Returns the number of FormspecElements.
-* :get(index)						- Returns the FormspecElement at the given index.
-* :set(index, FormspecElement)		- Replace the FormspecElement at the given index with a new one, or deletes it if the second argument is nil.
-* :add(FormspecElement)				- Add the given FormspecElement to the end of the list.
-* :del(index)						- Remove the FormspecElement at the given index. Elements after that one have their index reduced by 1 to close the gap.
+* :get_fs_size()					- Returns (width, height) that will be applied to all pages in this formspec.
+* :set_fs_size(w, h)				- Set the width and height of all pages in this formspec to the given numbers.
+* :set_tabs_hidden(bool)			- Set to true to disable the tabheader[] shown when there is more than 1 page. Useful for making your own navigation.
+* :size(n)							- Returns the number of FormspecElements in the given page. N defaults to 1.
+* :get(index, n)					- Returns Page n's FormspecElement at the given index. N defaults to 1.
+* :set(index, FormspecElement, n)	- Replace Page n's FormspecElement at the given index with a new one, or deletes it if the second argument is nil. N defaults to 1.
+* :add(FormspecElement, n)			- Add the given FormspecElement to Page n the end of the list. N defaults to 1.
+* :del(index, n)					- Remove the FormspecElement of Page n at the given index. N defaults to 1.
+* :page_add(title)					- Add a new page with the given title. Returns the page's index to allow formspec elements to be added to it.
+* :page_count()						- Returns the total number of pages.
+* :page_get(n)						- Returns the page at the specified index, if it exists.
+* :page_title(n)					- Returns the name given to the page at the specified index.
+* :page_del(n)						- Deletes the page at the given index. Any pages that were after it will be pushed back in the list to fill the space.
+* :page_current()					- Returns the currently displayed page.
+* :page_switch(n)					- Switches the formspec to instead show the given page. If n is a number but out of bounds, it will wrap around.
 * :form(Player, formname, fields)	- Build a presentable formspec string out of all existing FormspecElements according to their to_string method.
+
+### Global Callbacks (Use with caution):
+
+* lua_inv.register_on_formspec_open(function(player, formname, DynamicFormspec))
+	-- The given function will be called whenever any formspec is shown to a player or updated.
+
+* lua_inv.register_on_formspec_close(function(player, formname, DynamicFormspec, fields))
+	-- The given function will be called whenever any formspec is properly closed.
 
 
 
@@ -401,8 +431,21 @@ lua_inv.get_detached_inventory(name) - Returns a detached inventory indexed by t
 
 [Misc. Functions]
 
-* lua_inv.change_involves_list(change, listname)	- If the change table has an involved stack in the given listname, return the stack.
-* lua_inv.set_list_take_only(inv, change, listname) - Use in an allow_change callback to prevent players from placing items in the given listname.
+* lua_inv.change_involves_list(inv, change, listname)	- If the change table has an involved stack in the given inv and listname, return the stack.
+* lua_inv.set_list_take_only(inv, change, listname) 	- Use in an allow_change callback to prevent players from placing items in the given listname.
 * lua_inv.tiles_to_cube_textures({tiles})	- Converts a table of tiles from an object's properties into a table of textures for an entity.
 * lua_inv.update_hotbar(player)				- Update the player's hotbar visuals in the event of a change. Automatically called for most use cases.
+
+
+
+[Default Support Functions]
+
+* lua_inv.default.chest_override(name)									- Overrides the named chest so its behaviors properly use lua_inv.
+
+* lua_inv.default.furnace_override(name)								- Overrides the named furnace so its behaviors properly use lua_inv.
+
+* lua_inv.default.shelf_override(name, groupname, listname, slot_bg)	- Overrides the named shelf to work with lua_inv.
+	-- groupname: Only items with this groupname will be allowed on the shelf.
+	-- listname: The name of the shelf's inventory's main list.
+	-- slot_bg: The name of the image that will be shown in the shelf's slots to indicate the type of item it can accept.
 

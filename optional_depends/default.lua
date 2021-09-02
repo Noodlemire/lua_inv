@@ -17,6 +17,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 --]]
 
+lua_inv.default = {}
+
 local function can_dig_container(pos, player)
 	local inv = lua_inv.fetch_node_inventory(pos, true)
 
@@ -28,16 +30,19 @@ end
 -----------------------------------------------------
 
 local function chest_formspec(pos)
-	return lua_inv.dynamic_formspec({
-		lua_inv.formspec_element("size", {{8, 10}}),
-		lua_inv.dynamic_list({k = "nodemeta", v = {pos.x, pos.y, pos.z}}, "main", 0, 0.3, 8, 4),
-		lua_inv.dynamic_list("current_player", "main", 0, 4.85, 8, 1),
-		lua_inv.dynamic_list("current_player", "main", 0, 6.08, 8, 3, 8),
-		lua_inv.stack_mode_selector(0, 9.1)
-	})
+	local df = lua_inv.dynamic_formspec()
+	df:page_add("Main")
+	df:set_fs_size(8, 10)
+
+	df:add(lua_inv.dynamic_list({k = "nodemeta", v = {pos.x, pos.y, pos.z}}, "main", 0, 0.3, 8, 4))
+	df:add(lua_inv.dynamic_list("current_player", "main", 0, 4.85, 8, 1))
+	df:add(lua_inv.dynamic_list("current_player", "main", 0, 6.08, 8, 3, 8))
+	df:add(lua_inv.stack_mode_selector(0, 9.1))
+	
+	return df
 end
 
-local function chest_override(name)
+function lua_inv.default.chest_override(name)
 	local def = minetest.registered_items[name]
 
 	local override_def = {}
@@ -69,25 +74,28 @@ local function chest_override(name)
 	minetest.override_item(name.."_open", override_def)
 end
 
-chest_override("default:chest")
-chest_override("default:chest_locked")
+lua_inv.default.chest_override("default:chest")
+lua_inv.default.chest_override("default:chest_locked")
 
 -----------------------------------------------------
 --                  Furnaces                       --
 -----------------------------------------------------
 
 local function furnace_formspec(pos)
-	return lua_inv.dynamic_formspec({
-		lua_inv.formspec_element("size", {{8, 10}}),
-		lua_inv.dynamic_list({k = "nodemeta", v = {pos.x, pos.y, pos.z}}, "src", 2.75, 0.5, 1, 1),
-		lua_inv.dynamic_list({k = "nodemeta", v = {pos.x, pos.y, pos.z}}, "fuel", 2.75, 2.5, 1, 1),
-		lua_inv.dynamic_list({k = "nodemeta", v = {pos.x, pos.y, pos.z}}, "dst", 4.75, 0.96, 2, 2),
-		lua_inv.active_indicator(2.75, 1.5, 1, 1, "default_furnace_fire_bg.png", "default_furnace_fire_fg.png", "fuel_percent"),
-		lua_inv.active_indicator(3.75, 1.5, 1, 1, "gui_furnace_arrow_bg.png", "gui_furnace_arrow_fg.png^[transformR270", "item_percent"),
-		lua_inv.dynamic_list("current_player", "main", 0, 4.85, 8, 1),
-		lua_inv.dynamic_list("current_player", "main", 0, 6.08, 8, 3, 8),
-		lua_inv.stack_mode_selector(0, 9.1)
-	})
+	local df = lua_inv.dynamic_formspec()
+	df:page_add("main")
+	df:set_fs_size(8, 10)
+	
+	df:add(lua_inv.dynamic_list({k = "nodemeta", v = {pos.x, pos.y, pos.z}}, "src", 2.75, 0.5, 1, 1))
+	df:add(lua_inv.dynamic_list({k = "nodemeta", v = {pos.x, pos.y, pos.z}}, "fuel", 2.75, 2.5, 1, 1))
+	df:add(lua_inv.dynamic_list({k = "nodemeta", v = {pos.x, pos.y, pos.z}}, "dst", 4.75, 0.96, 2, 2))
+	df:add(lua_inv.active_indicator(2.75, 1.5, 1, 1, "default_furnace_fire_bg.png", "default_furnace_fire_fg.png", "fuel_percent"))
+	df:add(lua_inv.active_indicator(3.75, 1.5, 1, 1, "gui_furnace_arrow_bg.png", "gui_furnace_arrow_fg.png^[transformR270", "item_percent"))
+	df:add(lua_inv.dynamic_list("current_player", "main", 0, 4.85, 8, 1))
+	df:add(lua_inv.dynamic_list("current_player", "main", 0, 6.08, 8, 3, 8))
+	df:add(lua_inv.stack_mode_selector(0, 9.1))
+	
+	return df
 end
 
 local function swap_node(pos, name)
@@ -99,7 +107,7 @@ local function swap_node(pos, name)
 	minetest.swap_node(pos, node)
 end
 
-local function override_furnace(name)
+function lua_inv.default.furnace_override(name)
 	local def = minetest.registered_items[name]
 
 	local override_def = {}
@@ -112,7 +120,7 @@ local function override_furnace(name)
 					return false
 				end
 
-				local fuel = lua_inv.change_involves_list(change, "fuel")
+				local fuel = lua_inv.change_involves_list(inv, change, "fuel")
 				if fuel then
 					if change.key == "name" then
 						fuel = ItemStack(change.val)
@@ -147,7 +155,6 @@ local function override_furnace(name)
 		return inv
 	end
 
-	---[[
 	override_def.on_timer = function(pos, elapsed)
 		local meta = minetest.get_meta(pos)
 
@@ -339,7 +346,7 @@ local function override_furnace(name)
 		end
 
 		return result
-	end--]]
+	end
 
 	override_def.on_construct = function() end
 
@@ -358,4 +365,64 @@ local function override_furnace(name)
 	minetest.override_item(name.."_active", override_def)
 end
 
-override_furnace("default:furnace")
+lua_inv.default.furnace_override("default:furnace")
+
+-----------------------------------------------------
+--                   Shelves                      --
+-----------------------------------------------------
+
+local function shelf_formspec(pos, listname, slot_bg)
+	local df = lua_inv.dynamic_formspec()
+	df:page_add("Main")
+
+	df:add(lua_inv.dynamic_list({k = "nodemeta", v = {pos.x, pos.y, pos.z}}, listname, 0, 0.3, 8, 2, nil, slot_bg))
+	df:add(lua_inv.dynamic_list("current_player", "main", 0, 2.85, 8, 1))
+	df:add(lua_inv.dynamic_list("current_player", "main", 0, 4.08, 8, 3, 8))
+	df:add(lua_inv.stack_mode_selector(0, 7.1))
+	
+	return df
+end
+
+function lua_inv.default.shelf_override(name, groupname, listname, slot_bg)
+	local def = minetest.registered_items[name]
+
+	local override_def = {}
+
+	override_def._lua_inv_inventory = function(pos)
+		local inv = lua_inv.inventory(pos,
+			--Allow Change
+			function(inv, change)
+				local stack = lua_inv.change_involves_list(inv, change, listname)
+				if not stack then return true end
+				
+				local stackname = stack:get_name()
+				
+				if change.key == "name" then
+					stackname = change.val
+				elseif stack:is_empty() then
+					return true
+				end
+				
+				return minetest.get_item_group(stackname, groupname) ~= 0
+			end
+		)
+		
+		inv:set_size(listname, 16)
+		
+		return inv
+	end
+	
+	override_def.on_rightclick = function(pos, node, clicker, itemstack, pointed_thing)
+		lua_inv.show_formspec(clicker, name, shelf_formspec(pos, listname, slot_bg))
+	end
+
+	override_def.can_dig = can_dig_container
+	
+	minetest.override_item(name, override_def)
+end
+
+lua_inv.default.shelf_override("default:bookshelf", "book", "books", "default_bookshelf_slot.png")
+
+if minetest.get_modpath("vessels") then
+	lua_inv.default.shelf_override("vessels:shelf", "vessel", "vessels", "vessels_shelf_slot.png")
+end

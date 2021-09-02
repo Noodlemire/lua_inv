@@ -17,10 +17,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 --]]
 
-function lua_inv.change_involves_list(change, listname)
-	if change.stack and change.stack.parent.list == listname then return change.stack end
-	if change.stack1 and change.stack1.parent.list == listname then return change.stack2 end
-	if change.stack2 and change.stack2.parent.list == listname then return change.stack1 end
+function lua_inv.change_involves_list(inv, change, listname)
+	if change.stack and change.stack.parent.inv == inv and change.stack.parent.list == listname then return change.stack end
+	if change.stack1 and change.stack1.parent.inv == inv and change.stack1.parent.list == listname then return change.stack2 end
+	if change.stack2 and change.stack2.parent.inv == inv and change.stack2.parent.list == listname then return change.stack1 end
 end
 
 function lua_inv.set_list_take_only(inv, change, listname)

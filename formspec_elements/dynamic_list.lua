@@ -77,7 +77,7 @@ function lua_inv.inventory_from_location(inv_location, player)
 	return inv
 end
 
-function lua_inv.dynamic_list(in_inv_location, in_listname, in_x, in_y, in_w, in_h, in_start_i)
+function lua_inv.dynamic_list(in_inv_location, in_listname, in_x, in_y, in_w, in_h, in_start_i, in_slot_bg)
 	return lua_inv.formspec_element(
 		"dynamic_list",
 
@@ -87,6 +87,7 @@ function lua_inv.dynamic_list(in_inv_location, in_listname, in_x, in_y, in_w, in
 			{in_x, in_y},
 			{in_w, in_h},
 			in_start_i,
+			in_slot_bg
 		},
 
 		function(self, player, formname, fields)
@@ -163,6 +164,7 @@ function lua_inv.dynamic_list(in_inv_location, in_listname, in_x, in_y, in_w, in
 			local pos = self.args[3]
 			local size = self.args[4]
 			local start_i = (tonumber(self.args[5]) or 0)
+			local slot_bg = self.args[6]
 
 			local inv = lua_inv.inventory_from_location(inv_location, player)
 
@@ -207,6 +209,8 @@ function lua_inv.dynamic_list(in_inv_location, in_listname, in_x, in_y, in_w, in
 						if stack:get_wear() > 0 then
 							str = str.."image["..(pos[1] + x - 0.95)..','..(pos[2] + y - 1.0625)..";0.875,1;"..stack:get_wear_visual()..']'
 						end
+					elseif slot_bg then
+						str = str.."image["..(pos[1] + x - 1)..','..(pos[2] + y - 1)..";0.875,1;"..slot_bg.."]"
 					end
 
 					if meta:get_string("selection") == slotname then

@@ -36,6 +36,7 @@ function lua_inv.tiles_to_cube_textures(tiles)
 end
 
 local old_on_punch = minetest.registered_entities["__builtin:item"].on_punch
+local old_on_step = minetest.registered_entities["__builtin:item"].on_step
 
 entitycontrol.override_entity("__builtin:item", {
 	initial_properties = {
@@ -125,7 +126,7 @@ entitycontrol.override_entity("__builtin:item", {
 		self.object:remove()
 	end,
 
-	on_step = function(self, dtime)
+	on_step = function(self, dtime, moveresult)
 		if self._anim then
 			self._anim.time = self._anim.time - dtime * 1000
 
@@ -139,6 +140,10 @@ entitycontrol.override_entity("__builtin:item", {
 
 				self.object:set_properties({textures = {self._anim.get_frame:format(self._anim.frame)}})
 			end
+		end
+		
+		if old_on_step then
+			return old_on_step(self, dtime, moveresult)
 		end
 	end
 })

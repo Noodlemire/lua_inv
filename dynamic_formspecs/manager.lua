@@ -20,8 +20,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 lua_inv.open_formspecs = {}
 local cooldown = {}
 
+lua_inv.registered_on_formspec_open = {}
+lua_inv.registered_on_formspec_close = {}
+
+function lua_inv.register_on_formspec_open(func)
+	table.insert(lua_inv.registered_on_formspec_open, func)
+end
+
+function lua_inv.register_on_formspec_close(func)
+	table.insert(lua_inv.registered_on_formspec_close, func)
+end
+
 function lua_inv.show_formspec(player, formname, dynamic_formspec)
 	local pname = player:get_player_name()
+	
+	for i = 1, #lua_inv.registered_on_formspec_open do
+		lua_inv.registered_on_formspec_open[i](player, formname, dynamic_formspec)
+	end
+	
 	lua_inv.open_formspecs[pname] = dynamic_formspec
 
 	minetest.show_formspec(pname, formname, dynamic_formspec:form(player, formname))
@@ -44,6 +60,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	end
 
 	if fields.quit and formname ~= "" then
+		for i = 1, #lua_inv.registered_on_formspec_close do
+			lua_inv.registered_on_formspec_close[i](player, formname, lua_inv.open_formspecs[pname], fields)
+		end
+		
 		lua_inv.open_formspecs[pname] = nil
 		return
 	end
